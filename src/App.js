@@ -8,9 +8,9 @@ import "./App.css";
 
 function App() {
   const [currencyOptions, setCurrencyOptions] = useState([]);
-  const [leftCurrency, setLeftCurrency] = useState();
-  const [rightCurrency, setRightCurrency] = useState();
-  const [exchangeRate, setExchangeRate] = useState();
+  const [leftCurrency, setLeftCurrency] = useState(null);
+  const [rightCurrency, setRightCurrency] = useState(null);
+  const [exchangeRate, setExchangeRate] = useState(null);
   const [amount, setAmount] = useState(1);
   const [amountInLeftCurrency, setAmountInLeftCurrency] = useState(true);
 
@@ -27,7 +27,7 @@ function App() {
     fromAmount = amount / exchangeRate;
   }
   //Getting local currency based on coords that are being reverse geocoded using an API
-  const [localCurrency, setLocalCurrency] = useState();
+  const [localCurrency, setLocalCurrency] = useState(null);
 
   useEffect(() => {
     const fetchLocalCurrency = async () => {
@@ -40,6 +40,7 @@ function App() {
         );
         const data = await response.json();
         const currency = data.results[0].annotations.currency.iso_code;
+        console.log(currency);
         setLocalCurrency(currency);
       } catch (error) {
         console.error(error);
@@ -54,14 +55,14 @@ function App() {
       .currencies()
       .then((response) => {
         setCurrencyOptions(Object.keys(response.data));
-        setLeftCurrency(localCurrency);
+
         setRightCurrency(Object.keys(response.data)[1]);
       })
       .catch((error) => {
         console.log(error);
         throw new Error(error);
       });
-  }, []);
+  }, [localCurrency]);
   //Gets and sets the exchange rate after currency was changed
   useEffect(() => {
     if (leftCurrency != null && rightCurrency != null) {
