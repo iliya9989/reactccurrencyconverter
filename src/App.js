@@ -21,10 +21,10 @@ function App() {
   let toAmount, fromAmount;
   if (amountInLeftCurrency) {
     fromAmount = amount;
-    toAmount = amount * exchangeRate;
+    toAmount = (amount * exchangeRate).toFixed(2);
   } else {
     toAmount = amount;
-    fromAmount = amount / exchangeRate;
+    fromAmount = (amount / exchangeRate).toFixed(2);
   }
   //Getting local currency based on coords that are being reverse geocoded using an API
   const [localCurrency, setLocalCurrency] = useState(null);
@@ -40,7 +40,6 @@ function App() {
         );
         const data = await response.json();
         const currency = data.results[0].annotations.currency.iso_code;
-        console.log(currency);
         setLocalCurrency(currency);
       } catch (error) {
         console.error(error);
@@ -55,7 +54,7 @@ function App() {
       .currencies()
       .then((response) => {
         setCurrencyOptions(Object.keys(response.data));
-
+        setLeftCurrency(localCurrency);
         setRightCurrency(Object.keys(response.data)[1]);
       })
       .catch((error) => {
@@ -98,7 +97,13 @@ function App() {
         <CurrencyRow
           currencyOptions={currencyOptions}
           selectedCurrency={leftCurrency}
-          onChangeCurrency={(e) => setLeftCurrency(e.target.value)}
+          onChangeCurrency={(e) => {
+            if (e.target.value === rightCurrency) {
+              console.error("Can't pick the same currencies")
+            } else {
+              setLeftCurrency(e.target.value);
+            }
+          }}
           amount={fromAmount}
           onChangeAmount={handleFromAmountChange}
         />
@@ -106,7 +111,13 @@ function App() {
         <CurrencyRow
           currencyOptions={currencyOptions}
           selectedCurrency={rightCurrency}
-          onChangeCurrency={(e) => setRightCurrency(e.target.value)}
+          onChangeCurrency={(e) => {
+            if (e.target.value === leftCurrency) {
+              console.error("Can't pick the same currencies")
+            } else {
+              setRightCurrency(e.target.value);
+            }
+          }}
           amount={toAmount}
           onChangeAmount={handleToAmountChange}
         />
@@ -114,7 +125,10 @@ function App() {
       <div className="exchange-rate">
         Exchange Rate: {exchangeRate ? exchangeRate.toFixed(4) : ""}
       </div>
-      <HistoricalConverter />
+      <HistoricalConverter
+        baseCurrency={leftCurrency}
+        targetCurrency={rightCurrency}
+      />
     </Container>
   );
 }
