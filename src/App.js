@@ -26,13 +26,35 @@ function App() {
     toAmount = amount;
     fromAmount = amount / exchangeRate;
   }
+  //Getting local currency based on coords that are being reverse geocoded using an API
+  const [localCurrency, setLocalCurrency] = useState();
 
+  useEffect(() => {
+    const fetchLocalCurrency = async () => {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        const response = await fetch(
+          `https://api.opencagedata.com/geocode/v1/json?q=${position.coords.latitude}+${position.coords.longitude}&key=28f7fb681cc646b18e02b82eb91f08f3`,
+        );
+        const data = await response.json();
+        const currency = data.results[0].annotations.currency.iso_code;
+        setLocalCurrency(currency);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchLocalCurrency();
+  }, []);
+
+  //Sets default currencies and list of available currencies
   useEffect(() => {
     freecurrencyapi
       .currencies()
       .then((response) => {
         setCurrencyOptions(Object.keys(response.data));
-        setLeftCurrency(Object.keys(response.data)[0]);
+        setLeftCurrency(localCurrency);
         setRightCurrency(Object.keys(response.data)[1]);
       })
       .catch((error) => {
@@ -40,7 +62,7 @@ function App() {
         throw new Error(error);
       });
   }, []);
-
+  //Gets and sets the exchange rate after currency was changed
   useEffect(() => {
     if (leftCurrency != null && rightCurrency != null) {
       freecurrencyapi
@@ -57,7 +79,7 @@ function App() {
         });
     }
   }, [leftCurrency, rightCurrency]);
-
+  //Handling amount change
   function handleFromAmountChange(e) {
     setAmount(e.target.value);
     setAmountInLeftCurrency(true);
